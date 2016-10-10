@@ -36,6 +36,14 @@ angular.module('ngIntlTelInput')
             $log.warn('ng-intl-tel-input can only be applied to a *text* or *tel* input');
             return;
           }
+
+          var shouldValidate = true;
+
+          if(attr.disableTelValidation === true || attr.disableTelValidation === 'true') {
+            shouldValidate = false;
+          }
+
+          //console.log('Should validate tel?', shouldValidate);
           // Override default country.
           if (attr.defaultCountry) {
             ngIntlTelInput.set({defaultCountry: attr.defaultCountry});
@@ -45,22 +53,33 @@ angular.module('ngIntlTelInput')
           // Validation.
           ctrl.$validators.ngIntlTelInput = function (value) {
             // if phone number is deleted / empty do not run phone number validation
-            if (value || elm[0].value.length > 0) {
+            if(shouldValidate) {
+              if (value || elm[0].value.length > 0) {
                 return elm.intlTelInput("isValidNumber");
-            } else {
+              } else {
                 return true;
+              }
+            }else{
+              return true;
             }
           };
           // Set model value to valid, formatted version.
           ctrl.$parsers.push(function (value) {
-            return elm.intlTelInput('getNumber').replace(/[^\d]/, '');
+            if(shouldValidate) {
+              return elm.intlTelInput('getNumber').replace(/[^\d]/, '');
+            }else{
+              return elm.val();//intlTelInput('getNumber');
+            }
           });
           // Set input value to model value and trigger evaluation.
           ctrl.$formatters.push(function (value) {
             if (value) {
-              if(value.charAt(0) !== '+') {
-                value = '+' + value;
+              if(shouldValidate) {
+                if(value.charAt(0) !== '+') {
+                  value = '+' + value;
+                }
               }
+              
               elm.intlTelInput('setNumber', value);
             }
             return value;
